@@ -1,2 +1,2 @@
-# iconpay
+# iconpay-woocommerce
 ICONPay WooCommerce
