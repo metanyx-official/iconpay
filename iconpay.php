@@ -199,7 +199,7 @@ function convertPriceToICON( $invoice_amount ){
 	
 	 $myPluginGateway = new WC_iconpay_Gateway();
 
-    // $iostpay_account_id = $myPluginGateway->get_option('iostpay_account_id');
+    // $iconpay_account_id = $myPluginGateway->get_option('iconpay_account_id');
 	
      $cmc_api_key = $myPluginGateway->get_option('cmc_api_key');
 	
@@ -238,10 +238,10 @@ function convertPriceToICON( $invoice_amount ){
         
         if( isset( $response ) ){
             
-            $iostPrice       =        $response['data']['quote']['ICX']['price'] ; 
+            $iconPrice       =        $response['data']['quote']['ICX']['price'] ; 
 			
-             $iost_amount    =   number_format((float)$iostPrice, 2, '.', '');
-            return $iost_amount ;
+             $icon_amount    =   number_format((float)$iconPrice, 2, '.', '');
+            return $icon_amount ;
           }
 
 }	

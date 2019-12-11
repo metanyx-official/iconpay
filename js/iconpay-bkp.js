@@ -11,7 +11,7 @@ jQuery(function() {
 
 
 
-            addIostPayOnClick();
+            addIconPayOnClick();
             var wallet_address=jQuery("#wallet_address").val();
             console.log(wallet_address);
             jQuery('input[name="payment_method"]').change(function() {
@@ -63,7 +63,7 @@ jQuery(function() {
 });
 
 
-function addIostPayOnClick() {
+function addIconPayOnClick() {
 
     if (jQuery('form[name="checkout"] input[name="payment_method"]:checked').val() == 'iconpay') {
 

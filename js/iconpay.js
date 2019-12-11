@@ -57,7 +57,7 @@ swal({
 
               
 
-function addIostPayOnClick() {
+function addIconPayOnClick() {
 
     if (jQuery('form[name="checkout"] input[name="payment_method"]:checked').val() == 'iconpay') {
 
@@ -258,7 +258,7 @@ jQuery('#overlay').show();
 	   var status_code='wc-cancelled';
 					
 	jQuery.ajax({
-            url: iost_updateOrderURL,
+            url: icon_updateOrderURL,
             cache: false,
             type: "POST",
             data: {
@@ -287,7 +287,7 @@ function ajaxcall_pending(payload){
 	   var status_code='wc-cancelled';
 					
 	jQuery.ajax({
-            url: iost_updateOrderURL,
+            url: icon_updateOrderURL,
             cache: false,
             type: "POST",
             data: {
@@ -316,7 +316,7 @@ jQuery('#overlay').show();
 	   var status_code='wc-processing';
 					
 	jQuery.ajax({
-            url: iost_updateOrderURL,
+            url: icon_updateOrderURL,
             cache: false,
             type: "POST",
             data: {

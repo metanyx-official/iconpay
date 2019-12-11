@@ -19,7 +19,7 @@ global $woocommerce ;
  $shop_page_url = get_permalink( woocommerce_get_page_id( 'shop' ) );
 
 ?>
- <form name="paybyiost" id="paybyiost"	>
+ <form name="paybyicon" id="paybyicon"	>
 <input type="hidden" name="wallet_address" id="wallet_address" value="0">
  <input type="hidden" name="txn_hash" id="txn_hash">
  <input type="hidden" name="overalltotal" value="<?php echo $cart_total; ?>" id="overalltotal">
@@ -38,7 +38,7 @@ global $woocommerce ;
  var iconpaywallet_address  = '<?php echo $iconpaywallet_address ;   ?>' ;
  var order_id  = '<?php echo $order_id ;   ?>' ;
  var cart_total  = '<?php echo $cart_total ;   ?>' ;
- var iost_updateOrderURL  = '<?php echo plugin_dir_url( __FILE__ )."updateOrder.php/?order=$order_id" ?>' ;
+ var icon_updateOrderURL  = '<?php echo plugin_dir_url( __FILE__ )."updateOrder.php/?order=$order_id" ?>' ;
  var get_cart_url  = '<?php echo $get_cart_url ?>' ;
  var order_received_url  = '<?php echo $order_received_url ?>' ;
  var shop_page_url  = '<?php echo $shop_page_url ?>' ;
