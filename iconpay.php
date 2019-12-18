@@ -5,15 +5,15 @@
  * Description: Pay with ICON
  * Author: Metanyx
  * Author URI: https://metanyx.com/
- * Version: 1.0.2
+ * Version: 1.0.3
  *
 
 
 /*
  * This action hook registers our PHP class as a WooCommerce payment gateway
 */
-add_filter( 'woocommerce_payment_gateways', 'ioconpay_add_gateway_class' );
-function ioconpay_add_gateway_class( $gateways ) {
+add_filter( 'woocommerce_payment_gateways', 'iconpay_add_gateway_class' );
+function iconpay_add_gateway_class( $gateways ) {
 	$gateways[] = 'WC_iconpay_Gateway'; // your class name is here
 	return $gateways;
 }
@@ -22,8 +22,8 @@ function ioconpay_add_gateway_class( $gateways ) {
 /*
  * The class itself, please note that it is inside plugins_loaded action hook
  */
-add_action( 'plugins_loaded', 'ioconpay_init_gateway_class' );
-function ioconpay_init_gateway_class() {
+add_action( 'plugins_loaded', 'iconpay_init_gateway_class' );
+function iconpay_init_gateway_class() {
 
 	class WC_iconpay_Gateway extends WC_Payment_Gateway {
 
@@ -77,7 +77,7 @@ function ioconpay_init_gateway_class() {
 			$this->form_fields = array(
 				'enabled'               => array(
 					'title'       => 'Enable/Disable',
-					'label'       => 'Enable ioconpay',
+					'label'       => 'Enable ICONPay',
 					'type'        => 'checkbox',
 					'description' => '',
 					'default'     => 'no',
@@ -150,7 +150,7 @@ function ioconpay_init_gateway_class() {
 			// $this->order_status;
 			// update_post_meta( $order_id, '_iconpay_txnid_field', $_POST['txn_hash'] );
 			// Set order status
-			// $order->update_status( $status, __( 'Checkout with ioconpay.', $this->domain ) );
+			// $order->update_status( $status, __( 'Checkout with ICONPay.', $this->domain ) );
 
 			// Reduce stock levels
 			$order->reduce_order_stock();
@@ -238,22 +238,22 @@ function convertPriceToICON( $invoice_amount ) {
 }
 
  // Adding Meta container admin shop_order pages
-add_action( 'add_meta_boxes', 'ioconpay_add_meta_boxes' );
-if ( ! function_exists( 'ioconpay_add_meta_boxes' ) ) {
-	function ioconpay_add_meta_boxes() {
-		add_meta_box( 'txn_hash', __( 'IconPay TxHash', 'woocommerce' ), 'ioconpay_add_other_fields_for_packaging', 'shop_order', 'side', 'core' );
+add_action( 'add_meta_boxes', 'iconpay_add_meta_boxes' );
+if ( ! function_exists( 'iconpay_add_meta_boxes' ) ) {
+	function iconpay_add_meta_boxes() {
+		add_meta_box( 'txn_hash', __( 'ICONPay TxHash', 'woocommerce' ), 'iconpay_add_other_fields_for_packaging', 'shop_order', 'side', 'core' );
 	}
 }
 
 
 // Adding Meta field in the meta container admin shop_order pages
-if ( ! function_exists( 'ioconpay_add_other_fields_for_packaging' ) ) {
-	function ioconpay_add_other_fields_for_packaging() {
+if ( ! function_exists( 'iconpay_add_other_fields_for_packaging' ) ) {
+	function iconpay_add_other_fields_for_packaging() {
 		global $post;
 
 		$meta_field_data = get_post_meta( $post->ID, '_iconpay_txnid_field', true ) ? get_post_meta( $post->ID, '_iconpay_txnid_field', true ) : '';
 
-		echo '<input type="hidden" name="ioconpay_other_meta_field_nonce" value="' . wp_create_nonce() . '"> <p style="border-bottom:solid 1px #eee;padding-bottom:13px;">
+		echo '<input type="hidden" name="iconpay_other_meta_field_nonce" value="' . wp_create_nonce() . '"> <p style="border-bottom:solid 1px #eee;padding-bottom:13px;">
             <input type="text" style="width:250px;";" name="txn_hash" placeholder="' . $meta_field_data . '" value="' . $meta_field_data . '"></p>';
 
 	}
