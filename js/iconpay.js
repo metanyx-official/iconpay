@@ -87,7 +87,7 @@ if(fromAddress !==0 ){
         jQuery('#overlay').show();
         var type = event.detail.type;
         var payload = event.detail.payload;
-        alert(type);
+        //alert(type);
         if(typeof type === 'undefined' || type ==='CANCEL_JSON-RPC'){
             
           
