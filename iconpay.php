@@ -5,7 +5,7 @@
  * Description: Pay with ICON
  * Author: Metanyx
  * Author URI: https://metanyx.com/
- * Version: 1.0.3
+ * Version: 1.1.1
  *
 
 
