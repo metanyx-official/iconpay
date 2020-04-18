@@ -260,17 +260,490 @@ if ( ! function_exists( 'iconpay_add_other_fields_for_packaging' ) ) {
 }
 
 
-add_action( 'woocommerce_thankyou', 'iconpay_redirectcustom' );
+// add_action( 'woocommerce_thankyou', 'iconpay_redirectcustom' );
 
-function iconpay_redirectcustom( $order_id ) {
+// function iconpay_redirectcustom( $order_id ) {
 
-	$order = wc_get_order( $order_id );
+// 	$order = wc_get_order( $order_id );
 
-	$url = plugin_dir_url( __FILE__ ) . 'paybyicon.php?order=' . base64_encode( $order_id );
+// 	$url = plugin_dir_url( __FILE__ ) . 'paybyicon.php?order=' . base64_encode( $order_id );
 
-	if ( $order->get_payment_method() == 'iconpay' && $order->has_status( 'pending' ) ) {
-			wp_safe_redirect( $url );
-		exit;
+// 	if ( $order->get_payment_method() == 'iconpay' && $order->has_status( 'pending' ) ) {
+// 			wp_safe_redirect( $url );
+// 		exit;
+// 	}
+// }
+
+
+// add_action( 'woocommerce_thankyou', 'bbloomer_checkout_save_user_meta');
+ 
+// function bbloomer_checkout_save_user_meta( $order_id ) {
+    
+//   $order = wc_get_order( $order_id );
+//   $user_id = $order->get_user_id();
+  
+//   update_post_meta( $order_id, '_iconpay_txnid_field', $_POST['iconpay_txnid'] );
+  
+  
+//   echo'<pre>';
+  
+  
+  
+//   if ( $order->get_total() > 100 ) {  // Define your condition here
+//       update_user_meta( $user_id, 'custom_checkbox', 'on');
+//   }
+ 
+// }
+
+
+add_action( 'woocommerce_checkout_update_order_meta', 'my_custom_checkout_field_update_order_meta' );
+
+function my_custom_checkout_field_update_order_meta( $order_id ) {
+   
+    if ( ! empty( $_POST['txn_hash'] ) ) {
+        update_post_meta( $order_id, '_iconpay_txnid_field', $_POST['txn_hash'] );
+       $order = wc_get_order( $order_id );
+       $order->update_status('completed');
+      // update_post_meta( $order_id, 'txn_hash', sanitize_text_field( $_POST['txn_hash'] ) );
+    }
+}
+
+
+
+//add hidden filed to the form 
+add_action( 'woocommerce_after_order_notes', 'my_custom_checkout_field' );
+
+function my_custom_checkout_field( $checkout ) {
+
+    
+
+    woocommerce_form_field( 'txn_hash', array(
+        'type'          => 'text',
+        'class'         => array('txn_hash'),
+        'value'         =>'demoval'
+        ), $checkout->get_value( 'txn_hash' ));
+
+   
+
+}
+
+//checkout js integartion 
+
+add_action('woocommerce_checkout_after_order_review','icon_pay_btn');
+function icon_pay_btn(){
+    
+    echo '<style>button.sdfsdfsdfs {
+    float: right;
+}</style><button type="button" class="sdfsdfsdfs" style="display:none">Proceed to pay</button>';
+}
+
+
+add_action('wp_footer','icon_pay_js');
+function icon_pay_js(){
+    
+    $myPluginGateway = new WC_iconpay_Gateway();
+
+ $iconpaywallet_address = $myPluginGateway->get_option( 'iconpaywallet_address' );
+ $shop_page_url = get_permalink( woocommerce_get_page_id( 'shop' ) );
+ 
+    ?>
+    <!--//include scripts in here -->
+     <script type="text/javascript" src="<?php echo plugin_dir_url( __FILE__ ) . 'js/iconpay_main.js'; ?>"></script>
+ <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+ <input type="hidden" name="wallet_address" id="wallet_address" value="0">
+ <input type="hidden" name="overalltotal" value="<?php echo convertPriceToICON( WC()->cart->cart_contents_total ); ?>" id="overalltotal">
+ <style>
+     #txn_hash{
+      display:none;   
+     }
+ </style>
+ <input type="hidden" name="shop_wallet" id="shop_wallet" value="<?php echo $iconpaywallet_address; ?>">
+     <script>
+     jQuery(document).ready(function($){
+       $( document ).ajaxSuccess(function( event, xhr, settings ) {
+          
+           console.log(settings.url);
+           var string = settings.url;
+           var ajax_action = string.split('?');
+           console.log(ajax_action);
+               if ( ajax_action[1] == "wc-ajax=update_order_review" ) {
+                  if($('.sdfsdfsdfs').hasClass('icon_pay')){
+                      $('button#place_order').hide();
+                      $('.sdfsdfsdfs').show();
+                  }
+               }
+            });
+
+     });
+     
+     
+     
+     var shop_page_url  = '<?php echo $shop_page_url; ?>' ;
+         jQuery(document).ready(function($){
+             $('.sdfsdfsdfs').hide(); 
+            $('#order_review').on('click','li',function(){
+                   if($(this).find('label').attr('for') == 'payment_method_iconpay'){
+                           $('button#place_order').hide();
+                       $('.sdfsdfsdfs').show(); 
+                   }else{
+                       $('button#place_order').show();
+                       $('.sdfsdfsdfs').hide(); 
+                   }
+                    
+            });
+            
+             $('form.checkout.woocommerce-checkout').on('click','.sdfsdfsdfs',function(shop_page_url){ 
+                 $(this).addClass('icon_pay');
+                 var $count  = 1;
+                 var flag = true;
+                 $('form.checkout.woocommerce-checkout .validate-required input, form.checkout.woocommerce-checkout .validate-required select, form.checkout.woocommerce-checkout .validate-required textarea').each(function(){
+                     console.log($count++);
+                     if($(this).val() == ''){
+                         flag = false;
+                         $(this).css({'border':'1px solid #f00'});
+                         
+                     }
+                     
+                 });
+                 
+                 if(flag == true){
+                    //  alert('in flag');
+                     // icon pay
+                     var iconService = window['icon-sdk-js'];
+    var IconAmount = iconService.IconAmount;
+    var IconConverter = iconService.IconConverter;
+    var IconBuilder = iconService.IconBuilder;
+    
+window.addEventListener("ICONEX_RELAY_RESPONSE", eventHandler, false);
+ start_process();
+ 
+ 
+function start_process(){
+    
+ window.dispatchEvent(new CustomEvent('ICONEX_RELAY_REQUEST', {
+                     detail: {
+                     type: 'REQUEST_ADDRESS'
+                         }
+                        }));
+                        
+}
+
+
+                    
+
+              
+
+function addIconPayOnClick() {
+
+    if (jQuery('form[name="checkout"] input[name="payment_method"]:checked').val() == 'iconpay') {
+
+        jQuery("#place_order1").attr("onclick", "transfer()");
+        var fromAddress=jQuery("#wallet_address").val();
+console.log(fromAddress);
+if(fromAddress !==0 ){
+    
+}
+//alert('inif');
+    } else {
+//alert('inelse');
+        jQuery("#place_order1").removeAttr("onclick")
+        jQuery("#place_order1").removeAttr("disabled")
+
+    }
+
+}
+
+
+
+
+
+// type and payload are in event.detail
+    function eventHandler(event) {
+       
+       
+        var type = event.detail.type;
+        var payload = event.detail.payload;
+        console.log(type);
+        if(typeof type === 'undefined' || type ==='CANCEL_JSON-RPC'){
+            
+          
+            
+             transfer();
+            
+           
+           
+        }else{
+            
+        switch (type) {
+            case "RESPONSE_HAS_ACCOUNT":
+                // responseHasAccount.innerHTML = "> Result : " + payload.hasAccount + " (" + typeof payload.hasAccount + ")";
+                break;
+            case "RESPONSE_HAS_ADDRESS":
+                // responseHasAddress.innerHTML = "> Result : " + payload.hasAddress + " (" + typeof payload.hasAddress + ")";
+                break;
+            case "RESPONSE_ADDRESS":
+                
+                if(typeof payload === 'undefined'){
+                    transfer();
+                }
+                fromAddress = payload;
+               
+                    
+               jQuery("#wallet_address").val(payload);
+               
+               
+               
+                transfer();
+               
+               
+                break;
+            case "RESPONSE_JSON-RPC":
+                //  alert('in transaction');
+                var payload=JSON.stringify(payload);
+
+                //if the tracnsction json gives the success then proceed like this
+                var payload = JSON.parse(payload);
+                //   alert(payload.result);
+
+                if(payload.result){
+                    jQuery('#overlay').show();
+                     swal("success",'Payment Sucessfully done ',"success");
+                   
+                 jQuery('#txn_hash').val(payload.result);  
+                    
+                    
+                    
+                    jQuery("form[name='checkout']").submit();
+ 
+                  
+                   
+            
+                }else{
+                    var msg=payload.message;
+                    jQuery('#overlay').show();
+                   jQuery('.iotpay_statuscode').text(payload.message);
+                   ajaxcall_pending(payload);
+                }
+                // event.stopPropagation();
+                
+                
+                break;
+            case "CANCEL_JSON-RPC":
+                jQuery('#overlay').show();
+                 swal('error','You have cancelled transaction Please Wait..');
+            jQuery('.iotpay_statuscode').text('You have cancelled transaction Please Wait.. ');
+              	ajaxcall_cancel();
+            //   event.stopPropagation();
+               
+               
+                break;
+            case "RESPONSE_SIGNING":
+                // signingData.value = null;
+                // responseSigning.innerHTML = "> Signature : " + JSON.stringify(payload);
+                // event.stopPropagation();
+                break;
+            case "CANCEL_SIGNING":
+                // signingData.value = null;
+                // responseSigning.value = "> Signature : ";
+                // event.stopPropagation();
+                break;
+            default:
+                // event.stopPropagation();
+                //alert('in defult');
+            	jQuery('.iotpay_statuscode').text('You have cancelled transaction Please Wait.. ');
+            	
+              	setTimeout(function(){ jQuery('.iotpay_statuscode').text('Please wait while we redirect you.... ');  }, 3000);
+        }
+        
+        }
+    }
+
+    
+
+
+
+function transfer(){
+
+
+    
+
+    jQuery('#overlay').show();
+    
+
+
+var fromAddress=jQuery("#wallet_address").val();
+console.log(fromAddress);
+if(fromAddress !==0 ){
+var toadd =jQuery('#shop_wallet').val();
+var amount=jQuery('#overalltotal').val();
+//var amount =0.1;
+if(amount > 0){
+    var callTransactionBuilder = new IconBuilder.CallTransactionBuilder();
+                var callTransactionData = callTransactionBuilder
+                    .from(fromAddress)
+                    .to(toadd)
+                    .nid(IconConverter.toBigNumber(1))
+                    .nonce(IconConverter.toBigNumber(1))
+                    .timestamp((new Date()).getTime() * 1000)
+                    .stepLimit(IconConverter.toBigNumber(1000000))
+                    .version(IconConverter.toBigNumber(3))
+                    .method('createToken')
+                    .value(IconAmount.of(amount, IconAmount.Unit.ICX).toLoop())
+                   
+                    .build();
+               
+
+        var parsed = JSON.parse(JSON.stringify({
+                    "jsonrpc": "2.0",
+                    "method": "icx_sendTransaction",
+                    "params": IconConverter.toRawTransaction(callTransactionData),
+                    "id": Math.floor(10000 + Math.random() * 90000)
+                }));
+
+ 
+
+         window.dispatchEvent(new CustomEvent('ICONEX_RELAY_REQUEST', {
+            detail: {
+                type: 'REQUEST_JSON-RPC',
+                payload: parsed
+            }
+        })) 
+        return;
+}else{
+  jQuery('.iotpay_statuscode').text('Amount cannot be 0');
+  setTimeout(function(){ jQuery('.iotpay_statuscode').text('Please wait while we redirect you.... ');   }, 3000);  
+}
+
+}else{
+
+start_process();
+                       
+    
+}
+
+     
+
+}
+
+
+// if transaction cancelled by user it self 
+
+function ajaxcall_cancel(){
+    //alert('am called');
+jQuery('#overlay').show();
+	 
+	   var iconpay_txnid='Cancelled by user';
+	   var status_code='wc-cancelled';
+					
+	jQuery.ajax({
+            url: icon_updateOrderURL,
+            cache: false,
+            type: "POST",
+            data: {
+             iconpay_txnid : iconpay_txnid,
+			 orderStatus : status_code,
+			 message : '{"reason":"cancelled by user"}'
+            },
+		success: function( resp ) {
+				 jQuery('.iotpay_statuscode').text('You have cancelled transaction Please Wait.. ');
+              	
+              	
+              	setTimeout(function(){ jQuery('.iotpay_statuscode').text('Please wait while we redirect you.... ');   }, 3000);
+						
+				 
+			}			
+		})
+	};  
+
+
+
+//if transaction called by due to some error
+function ajaxcall_pending(payload){
+
+	jQuery('#overlay').show();   
+	   var iconpay_txnid=payload.message;
+	   var status_code='wc-cancelled';
+					
+	jQuery.ajax({
+            url: icon_updateOrderURL,
+            cache: false,
+            type: "POST",
+            data: {
+             iconpay_txnid : iconpay_txnid,
+			 orderStatus : status_code,
+			 message : payload
+            },
+		success: function( resp ) {
+						
+					
+			 jQuery('.iotpay_statuscode').text(iconpay_txnid);
+              	
+              	
+              	setTimeout(function(){ jQuery('.iotpay_statuscode').text('Your transaction cancelled.Please wait while we redirect you.... ');   }, 3000);			
+				 
+			}			
+		})
+	}; 
+	
+	
+	
+
+function icon_updateOrder( payload ) {
+jQuery('#overlay').show();
+	   var iconpay_txnid=payload.result
+	   var status_code='wc-processing';
+					
+	jQuery.ajax({
+            url: icon_updateOrderURL,
+            cache: false,
+            type: "POST",
+            data: {
+             iconpay_txnid : iconpay_txnid,
+			 orderStatus : status_code,
+			 message : payload
+            },
+		success: function( resp ) {
+				console.log('am here'+resp);		
+				// 	swal({
+    //                     title: "Iwallet",
+    //                     text : 'Payment Completed Successfully',
+    //                     type : "success"
+    //                 }).then((willDelete) => {
+
+				// 		window.location = order_received_url ;
+				// 	});
+				   var obj = JSON.parse(resp);
+				   var s=order_received_url+'/?key='+obj.order_key+'&success=1';
+			     //	var success_url=jQuery("#o_success").val(s);
+					
+					
+					//alert(s);
+					//console.log(s);
+					
+					jQuery('.iotpay_statuscode').text('Payment Completed Successfully Please Wait.. ');
+              	
+               	 jQuery('.iotpay_statuscode').text('Please wait while we redirect you.... ');
+               	 var new_url=s;
+               	window.location =new_url;
+               	
+					return;	
+						
+						
+				 
+			}			
+		})
 	}
+	
+                 }else{
+                     $('html, body').animate({ scrollTop:400 }, 800);
+                 }
+                 
+                 
+                 
+             });
+             
+         });
+     </script>
+    <?php
 }
 
